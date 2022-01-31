@@ -22,7 +22,6 @@ def dataReader(file_name):
     with open(file_name,'r') as corpus_file:
         corpus = [json.loads(jline) for jline in corpus_file.read().splitlines()]
     return corpus
-
 def n_gram_cross_section(sentence1_words, sentence2_words, n_gram):
     cross_section=[]
     for word in sentence1_words:
@@ -46,12 +45,19 @@ def n_gram_cross_section_with_word2vec(word2vec,sentence1_words, sentence2_words
                     a=1
     return cross_section
 
-def tokenize_and_remove_stopwords(sentence):
-    stop_words = set(stopwords.words('english'))
+def vectorize_and_mult(sentences):
+    count_vectorized = CountVectorizer(max_features=1000,
+                                            strip_accents='ascii',
+                                            lowercase=True)
+    vectorized=count_vectorized.fit_transform(sentences)
+    multed=[]
+    for i in range(0,vectorized.shape[0]-1):
+#        p=vectorized[i]
+        multed.append(np.add(vectorized[i],vectorized[i+1]))
+        i+=1
+    return multed
 
-    word_tokens = tokenize(sentence)
 
-    return [w.lower() for w in word_tokens if not w.lower() in stop_words]
 
 def get_verbs_from_tree(tree_as_string):
     tree = nltk.tree.Tree.fromstring(tree_as_string)
@@ -60,50 +66,50 @@ def get_verbs_from_tree(tree_as_string):
         if s.label().startswith('V'):
             verbs.append(s[0])
     return verbs
+
+def tokenize_and_remove_stopwords(sentence):
+    stop_words = set(stopwords.words('english'))
+
+    word_tokens = word_tokenize(sentence)
+
+    filtered_sentence = [w for w in word_tokens if not w.lower() in stop_words]
+
+    filtered_sentence = []
+
+    for w in word_tokens:
+        if w not in stop_words:
+            filtered_sentence.append(w)
+
+    print(word_tokens)
+    print(filtered_sentence)
 def prepareDataForClassifier(line,word2vec):
-    #sentence1=line['sentence1_parse'].lower()
-    #sentence2=line['sentence2_parse'].lower()
     sentence1_words=tokenize_and_remove_stopwords(line['sentence1'])
     sentence2_words=tokenize_and_remove_stopwords(line['sentence2'])
-    #sentence1_words=nltk.tree.Tree.fromstring(sentence1).leaves()
-    #sentence2_words=nltk.tree.Tree.fromstring(sentence2).leaves()
     return (" ".join(n_gram_cross_section_with_word2vec(word2vec,sentence1_words,sentence2_words)))
 
-
+def list_of_sentnces(data):
+    sentnces=[]
+    for line in data:
+        sentnces.append(line['sentence1'])
+        sentnces.append(line['sentence2'])
+    return sentnces
 def testWithClassifier(train, test):
     data_for_train=dataReader(train)
     cross_sections=[]
-    word2vec=acquire_word_embedding()
+   # word2vec=acquire_word_embedding()
     gold_labels=[]
     count_vectorized = CountVectorizer(max_features=1000,
-                                       strip_accents='ascii',
-                                       lowercase=True)
+                                            strip_accents='ascii',
+                                            lowercase=True)
     tfidf_transformer = TfidfTransformer(use_idf=True)
-    prec=-1
     for i,line in enumerate(data_for_train):
-        if i%(len(data_for_train)/100.0)==0:
-            prec+=1
-            print(f"{prec}%")
-        cross_sections.append(prepareDataForClassifier(line,word2vec))
+        prepareDataForClassifier(line)
         gold_labels.append(line['gold_label'])
-    print("acuierd data")
-    x_train_counts = count_vectorized.fit_transform(cross_sections)
-    x_train_tfidf = tfidf_transformer.fit_transform(x_train_counts)
-    classifier=LogisticRegression(max_iter=1000).fit(x_train_tfidf,gold_labels)
-    print("trained")
+    list_of_sentences=list_of_sentnces(data_for_train)
 
-    data_for_test=dataReader(test)
-    cross_sections_test=[]
-    gold_labels_test=[]
-    for line in data_for_test:
-        cross_sections_test.append(prepareDataForClassifier(line,word2vec))
-        gold_labels_test.append(line['gold_label'])
-    x_new_counts = count_vectorized.transform(cross_sections_test)
-    x_new_tfidf = tfidf_transformer.transform(x_new_counts)
-    print("predicting")
-    predicted = classifier.predict(x_new_tfidf)
-    a=accuracy_score(gold_labels_test,predicted)
-    print(a)
+    multed=vectorize_and_mult(list_of_sentences)
+    x_train_tfidf=tfidf_transformer.fit_transform(multed)
+    classifier = LogisticRegression().fit(x_train_tfidf, gold_labels)
 
 
 
@@ -114,6 +120,6 @@ def print_hi(name):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    testWithClassifier('snli_1.0/snli_1.0_train.jsonl','snli_1.0/snli_1.0_test.jsonl')
+    testWithClassifier('snli_1.0/snli_1.0_dev.jsonl','snli_1.0/snli_1.0_test.jsonl')
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
