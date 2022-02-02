@@ -42,8 +42,7 @@ def labels_to_ints(labels):
     convert_table={
         "entailment":0,
         "neutral":1,
-        "contradiction":2,
-        "-":3
+        "contradiction":2
     }
 
     return [convert_table[label] for label in labels]
@@ -52,6 +51,8 @@ def prepair_data_for_model(data):
     gold_labels=[]
     sentences=[]
     for line in data:
+        if line["gold_label"] == '-':
+            continue
         sentences.append(f"{line['sentence1']} {line['sentence2']}")
         gold_labels.append(line['gold_label'])
     return sentences, gold_labels
@@ -83,20 +84,20 @@ def testWithLSTM(train, test):
     model = keras.models.Sequential()
     model.add(layers.Embedding(num_unique_words,32,input_length=max_length))
     model.add(layers.LSTM(128,dropout=0.3))
-    model.add(layers.Dense(4,activation='softmax'))
+    model.add(layers.Dense(3,activation='softmax'))
     loss = keras.losses.CategoricalCrossentropy(from_logits=False)
     optim = keras.optimizers.Adam(lr=0.001) # weakspot- how to choose optimizer?
     metrics = ["accuracy"]
     model.summary()
     model.compile(loss=loss, optimizer=optim, metrics=metrics)
 
-    train_labels=keras.utils.to_categorical(train_labels,num_classes=4)
-    validation_labels=keras.utils.to_categorical(validation_labels,num_classes=4)
-    model.fit(train_padded,train_labels,epochs=10,validation_data=(validation_padded,validation_labels),verbose=2)# weakspot- what is verbose?
+    train_labels=keras.utils.to_categorical(train_labels,num_classes=3)
+    validation_labels=keras.utils.to_categorical(validation_labels,num_classes=3)
+    model.fit(train_padded,train_labels,epochs=10,validation_data=(validation_padded,validation_labels),verbose=2)#  - what is verbose?
     predictions=model.predict(validation_padded)
     print("WOOHOO")
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    testWithLSTM('snli_1.0/snli_1.0_dev.jsonl','snli_1.0/snli_1.0_test.jsonl')
+    testWithLSTM('snli_1.0/snli_1.0_train.jsonl','snli_1.0/snli_1.0_test.jsonl')
