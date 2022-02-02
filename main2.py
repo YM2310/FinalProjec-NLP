@@ -17,7 +17,7 @@ import gensim.downloader as api
 
 
 def acquire_word_embedding():
-    return api.load("glove-wiki-gigaword-300")
+    return api.load("glove-wiki-gigaword -300")
 def dataReader(file_name):
     with open(file_name,'r') as corpus_file:
         corpus = [json.loads(jline) for jline in corpus_file.read().splitlines()]
