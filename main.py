@@ -3,13 +3,14 @@ import json
 import gensim
 import nltk as nltk
 import numpy as np
+from matplotlib import pyplot as plt
 from nltk import word_tokenize
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_selection import SelectKBest
 from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.metrics import f1_score, confusion_matrix, accuracy_score
+from sklearn.metrics import f1_score, confusion_matrix, accuracy_score, ConfusionMatrixDisplay
 from gensim.test.utils import common_texts
 from gensim.models import Word2Vec
 from gensim.utils import tokenize
@@ -103,6 +104,9 @@ def testWithClassifier(train, test):
     print("predicting")
     predicted = classifier.predict(x_new_tfidf)
     a=accuracy_score(gold_labels_test,predicted)
+    ConfusionMatrixDisplay.from_predictions(
+    gold_labels_test,predicted)
+    plt.show()
     print(a)
 
 

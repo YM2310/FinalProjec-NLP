@@ -71,7 +71,6 @@ def testWithLSTM(train, test):
     validation_labels=np.array(labels_to_ints(gold_labels[trainsplit:]))
     tokenizer=Tokenizer(num_words=num_unique_words)
     tokenizer.fit_on_texts(train_sentences)
-    word_index=tokenizer.word_index
 
     train_sequences=tokenizer.texts_to_sequences(train_sentences)
     validation_sequences=tokenizer.texts_to_sequences(validation_sentences)
@@ -93,11 +92,15 @@ def testWithLSTM(train, test):
 
     train_labels=keras.utils.to_categorical(train_labels,num_classes=3)
     validation_labels=keras.utils.to_categorical(validation_labels,num_classes=3)
-    model.fit(train_padded,train_labels,epochs=10,validation_data=(validation_padded,validation_labels),verbose=2)#  - what is verbose?
+    model.fit(train_padded,train_labels,epochs=10,validation_data=(validation_padded,validation_labels),verbose=2)# weakspot - what is verbose?
+
     predictions=model.predict(validation_padded)
+    #TODO- Test on actual test
+    # Implement a way to save the model once trained
+    # improvement- see how to vectorize better- look at papers from SNLI.
     print("WOOHOO")
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    testWithLSTM('snli_1.0/snli_1.0_train.jsonl','snli_1.0/snli_1.0_test.jsonl')
+    testWithLSTM('snli_1.0/snli_1.0_dev.jsonl','snli_1.0/snli_1.0_test.jsonl')
