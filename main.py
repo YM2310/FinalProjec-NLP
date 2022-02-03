@@ -82,6 +82,8 @@ def testWithClassifier(train, test):
     tfidf_transformer = TfidfTransformer(use_idf=True)
     prec=-1
     for i,line in enumerate(data_for_train):
+        if line['gold_label'] == "-":
+            continue
         if i%(len(data_for_train)/100.0)==0:
             prec+=1
             print(f"{prec}%")
@@ -97,6 +99,8 @@ def testWithClassifier(train, test):
     cross_sections_test=[]
     gold_labels_test=[]
     for line in data_for_test:
+        if line['gold_label'] == "-":
+            continue
         cross_sections_test.append(prepareDataForClassifier(line,word2vec))
         gold_labels_test.append(line['gold_label'])
     x_new_counts = count_vectorized.transform(cross_sections_test)
@@ -107,7 +111,10 @@ def testWithClassifier(train, test):
     ConfusionMatrixDisplay.from_predictions(
     gold_labels_test,predicted)
     plt.show()
+    f1 = f1_score(gold_labels_test, predicted, average=None)
+    print(f1)
     print(a)
+    print("done")
 
 
 
